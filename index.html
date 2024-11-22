@@ -33,7 +33,7 @@
         id="apiKey"
         style="width: 300px"
         placeholder="Enter your API key"
-        value=""
+        value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiIxYTNlM2UxNi01NGY3LTQ2MjYtODRlZS1hNTg0NzQ0MzJjOWEiLCJzdWIiOiI0MTE3ZmJkZi02YTI0LTQ3M2MtYjFlNi1kZmM5M2QzMDBmYzgiLCJpYXQiOjE3Mjg1ODU5MjZ9.Z1zVE_aFVjqTpO5KYBBNFALEL4qIpAXcTiEwVL3BDsw"
       />
     </div>
 
@@ -43,7 +43,7 @@
         type="text"
         id="skuId"
         style="width: 300px"
-        value=""
+        value="ae03dc89-cdc8-48f7-9ff0-bac5efbe3943"
         placeholder="Enter SKU ID"
       />
     </div>
@@ -55,6 +55,19 @@
         id="userReferenceId"
         style="width: 300px"
         placeholder="Enter user reference ID"
+        value="harsha1"
+      />
+    </div>
+
+    <div>
+      <label for="quantity">Quantity:</label>
+      <input
+        type="number"
+        id="quantity"
+        style="width: 300px"
+        placeholder="Enter quantity"
+        value="1"
+        min="1"
       />
     </div>
 
@@ -63,15 +76,12 @@
 
     <div id="result"></div>
 
-    <script
-      src="https://storage.googleapis.com/gameshift/storefront.js"
-      crossorigin="anonymous"
-    ></script>
+    <script src="./storefront5.js"></script>
 
     <script>
       window.addEventListener('load', () => {
         if (typeof Storefront !== 'undefined') {
-          console.log('Storefront SDK loaded successfully');
+          console.log('Storefront SDK loaded successfully', { Storefront });
           document.getElementById('result').textContent = 'SDK Ready';
         } else {
           console.error('Storefront SDK failed to load');
@@ -87,63 +97,159 @@
           alert('Please enter an API key');
           return null;
         }
-        return new Storefront({
-          apiKey: apiKey,
-          environment: Environment.Development,
+        console.log('Initializing Storefront with:', {
+          apiKey,
+          environment: window.Environment.Development,
         });
+        const sf = new Storefront({
+          apiKey: apiKey,
+          environment: window.Environment.Development,
+        });
+        console.log('Storefront initialized:', sf);
+        return sf;
       }
 
       async function getSku() {
-        storefront = initializeStorefront();
-        if (!storefront) return;
-
-        const skuId = document.getElementById('skuId').value;
-        if (!skuId) {
-          alert('Please enter a SKU ID');
-          return;
-        }
-
+        console.log('Starting getSku...');
         try {
+          storefront = initializeStorefront();
+          if (!storefront) return;
+
+          const skuId = document.getElementById('skuId').value;
+          if (!skuId) {
+            alert('Please enter a SKU ID');
+            return;
+          }
+
+          console.log('Fetching SKU with ID:', skuId);
           const result = await storefront.getSku(skuId);
+          console.log('SKU fetch successful:', result);
+
+          if (!result.success) {
+            const errorMessage = result.error
+              ?.toLowerCase()
+              .includes('invalid api key')
+              ? 'Error: Invalid API Key'
+              : `Error: ${result.error}`;
+            document.getElementById('result').textContent = errorMessage;
+            return;
+          }
+
           document.getElementById('result').textContent = JSON.stringify(
             result,
             null,
             2,
           );
         } catch (error) {
-          document.getElementById('result').textContent =
-            'Error: ' + error.message;
+          console.error('SKU fetch failed:', error);
+          const errorMessage = error.message
+            ?.toLowerCase()
+            .includes('invalid api key')
+            ? 'Error: Invalid API Key'
+            : 'Error: ' + error.message;
+          document.getElementById('result').textContent = errorMessage;
         }
       }
 
       async function purchaseSku() {
-        storefront = initializeStorefront();
-        if (!storefront) return;
-
-        const skuId = document.getElementById('skuId').value;
-        const userReferenceId =
-          document.getElementById('userReferenceId').value;
-
-        if (!skuId || !userReferenceId) {
-          alert('Please enter both SKU ID and User Reference ID');
-          return;
-        }
-
+        console.log('Starting purchaseSku...');
         try {
-          const result = await storefront.purchaseSkuImmediately({
+          storefront = initializeStorefront();
+          if (!storefront) return;
+
+          const skuId = document.getElementById('skuId').value;
+          const userReferenceId =
+            document.getElementById('userReferenceId').value;
+          const quantity =
+            parseInt(document.getElementById('quantity').value) || 1;
+
+          if (!skuId || !userReferenceId) {
+            alert('Please enter both SKU ID and User Reference ID');
+            return;
+          }
+
+          const skuResult = await storefront.getSku(skuId);
+          if (!skuResult.success) {
+            const errorMessage = skuResult.error
+              ?.toLowerCase()
+              .includes('invalid api key')
+              ? 'Error: Invalid API Key'
+              : `Error: ${skuResult.error}`;
+            document.getElementById('result').textContent = errorMessage;
+            return;
+          }
+
+          const purchaseParams = {
             type: 'NewMintUniqueAsset',
             skuId: skuId,
             userReferenceId: userReferenceId,
-            quantity: 1,
-          });
-          document.getElementById('result').textContent = JSON.stringify(
-            result,
-            null,
-            2,
-          );
-        } catch (error) {
+            quantity: quantity,
+          };
+
+          console.log('Attempting purchase with params:', purchaseParams);
+
+          // Update the message handler with additional debugging
+          const messageHandler = function (event) {
+            console.log('Message received:', {
+              origin: event.origin,
+              data: event.data,
+              type: event?.data?.type,
+              status: event?.data?.status,
+            });
+
+            // Add a more lenient check for the completion event
+            if (event.data && event.data.type === 'PaymentComplete') {
+              console.log('Payment complete event detected:', event.data);
+
+              let displayMessage;
+              if (event.data.status === 'completed' && event.data.data) {
+                displayMessage = `Purchase Completed Successfully!\n
+Transaction ID: ${event.data.data.transactionId}
+Cart ID: ${event.data.data.cartId}
+Items Purchased:
+${event.data.data.items
+  .map(
+    (item) => `  - SKU: ${item.id}
+    Quantity: ${item.quantity}
+    Price: ${item.price}`,
+  )
+  .join('\n')}`;
+              } else {
+                displayMessage = `Purchase Status: ${
+                  event.data.status
+                }\n${JSON.stringify(event.data, null, 2)}`;
+              }
+
+              document.getElementById('result').textContent = displayMessage;
+
+              // Remove the event listener
+              window.removeEventListener('message', messageHandler);
+            }
+          };
+
+          // Add the event listener before initiating the purchase
+          window.addEventListener('message', messageHandler);
+
           document.getElementById('result').textContent =
-            'Error: ' + error.message;
+            'Processing purchase...';
+          const result = await storefront.purchaseSkuImmediately(
+            purchaseParams,
+          );
+          console.log('Purchase initiated:', result);
+        } catch (error) {
+          console.error('Purchase Error:', error);
+          // Updated error handling to show more specific messages
+          const errorMessage = error.message.includes('Invalid API key')
+            ? 'Error: Invalid API Key'
+            : 'Error Details:\n' +
+              `Message: ${error.message}\n` +
+              `Status: ${error.status || 'N/A'}\n` +
+              `Code: ${error.code || 'N/A'}`;
+
+          document.getElementById('result').textContent = errorMessage;
+
+          // Remove the event listener in case of error
+          window.removeEventListener('message', messageHandler);
         }
       }
     </script>

@@ -4,18 +4,18 @@
  */
 !(function (e) {
   'use strict';
-  function __awaiter(e, t, o, n) {
-    return new (o || (o = Promise))(function (s, i) {
+  function __awaiter(e, t, o, s) {
+    return new (o || (o = Promise))(function (n, i) {
       function fulfilled(e) {
         try {
-          step(n.next(e));
+          step(s.next(e));
         } catch (e) {
           i(e);
         }
       }
       function rejected(e) {
         try {
-          step(n.throw(e));
+          step(s.throw(e));
         } catch (e) {
           i(e);
         }
@@ -23,7 +23,7 @@
       function step(e) {
         var t;
         e.done
-          ? s(e.value)
+          ? n(e.value)
           : ((t = e.value),
             t instanceof o
               ? t
@@ -31,7 +31,7 @@
                   e(t);
                 })).then(fulfilled, rejected);
       }
-      step((n = n.apply(e, t || [])).next());
+      step((s = s.apply(e, t || [])).next());
     });
   }
   function animateModalOut(e, t, o) {
@@ -42,26 +42,28 @@
         (o.style.opacity = '0'));
   }
   'function' == typeof SuppressedError && SuppressedError;
-  const t = !1,
+  const t = !0,
     o = { api: 'http://localhost:3000', frontend: 'http://localhost:8080' },
-    n = {
+    s = {
       api: 'https://api.gameshift.dev',
       frontend: 'https://app.gameshift.dev',
     };
   function getUrls(e = !1) {
-    return { api: e ? o.api : n.api, frontend: e ? o.frontend : n.frontend };
+    return { api: e ? o.api : s.api, frontend: e ? o.frontend : s.frontend };
   }
-  var s;
+  var n;
   (e.Environment = void 0),
-    ((s = e.Environment || (e.Environment = {})).Development = 'Development'),
-    (s.Production = 'Production');
+    ((n = e.Environment || (e.Environment = {})).Development = 'Development'),
+    (n.Production = 'Production');
   class Storefront {
     constructor(e) {
       (this.skipCloseConfirmation = !1),
         (this.isApiKeyValid = !1),
         (this.isConfirmationDialogOpen = !1),
         console.log('create config', e),
-        (this.config = e);
+        (this.config = Object.assign(Object.assign({}, e), {
+          popup: void 0 === e.popup || e.popup,
+        }));
     }
     validateApiKey() {
       return __awaiter(this, void 0, void 0, function* () {
@@ -83,32 +85,32 @@
             ((this.isApiKeyValid = !1),
             new Error(`API validation failed with status ${o.status}`))
           );
-        const n = yield o.json();
-        if ((console.log('validateApiKey result', n), !n.isValid))
+        const s = yield o.json();
+        if ((console.log('validateApiKey result', s), !s.isValid))
           throw (
-            (console.error('validateApiKey error', n.error),
+            (console.error('validateApiKey error', s.error),
             (this.isApiKeyValid = !1),
-            new Error(n.error || 'Invalid API key'))
+            new Error(s.error || 'Invalid API key'))
           );
         this.isApiKeyValid = !0;
       });
     }
     listSkus(e) {
       return __awaiter(this, void 0, void 0, function* () {
-        return (function (e, o, n, s) {
+        return (function (e, o, s, n) {
           return __awaiter(this, void 0, void 0, function* () {
             const i = new URLSearchParams();
             o && i.append('page', o.toString()),
-              n && i.append('perPage', n.toString()),
-              (null == s ? void 0 : s.priceLessThan) &&
-                i.append('priceLessThan', s.priceLessThan),
-              (null == s ? void 0 : s.priceGreaterThan) &&
-                i.append('priceGreaterThan', s.priceGreaterThan),
-              (null == s ? void 0 : s.nameContains) &&
-                i.append('nameContains', s.nameContains),
-              (null == s ? void 0 : s.type) && i.append('type', s.type),
-              (null == s ? void 0 : s.collectionId) &&
-                i.append('collectionId', s.collectionId);
+              s && i.append('perPage', s.toString()),
+              (null == n ? void 0 : n.priceLessThan) &&
+                i.append('priceLessThan', n.priceLessThan),
+              (null == n ? void 0 : n.priceGreaterThan) &&
+                i.append('priceGreaterThan', n.priceGreaterThan),
+              (null == n ? void 0 : n.nameContains) &&
+                i.append('nameContains', n.nameContains),
+              (null == n ? void 0 : n.type) && i.append('type', n.type),
+              (null == n ? void 0 : n.collectionId) &&
+                i.append('collectionId', n.collectionId);
             const { api: r } = getUrls(t),
               a = yield fetch(
                 `${r}/internal/storefront/skus-with-inventory?${i.toString()}`,
@@ -136,13 +138,13 @@
       return __awaiter(this, void 0, void 0, function* () {
         return (function (e, o) {
           return __awaiter(this, void 0, void 0, function* () {
-            const { api: n } = getUrls(t),
-              s = yield fetch(`${n}/nx/storefront/skus/${o}`, {
+            const { api: s } = getUrls(t),
+              n = yield fetch(`${s}/nx/storefront/skus/${o}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json', 'x-api-key': e },
               });
-            return s.ok
-              ? { success: !0, data: yield s.json() }
+            return n.ok
+              ? { success: !0, data: yield n.json() }
               : { success: !1, error: 'Failed to fetch SKU' };
           });
         })(this.config.apiKey, e);
@@ -151,7 +153,7 @@
     purchaseSkuImmediately(e) {
       return __awaiter(this, void 0, void 0, function* () {
         const { api: o } = getUrls(t),
-          n = yield fetch(`${o}/internal/storefront/skus/${e.skuId}/purchase`, {
+          s = yield fetch(`${o}/internal/storefront/skus/${e.skuId}/purchase`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -163,22 +165,22 @@
               vendorData: e.vendorData,
             }),
           });
-        if (!n.ok)
+        if (!s.ok)
           return {
             success: !1,
             status: 'failed',
             error: 'Failed to create cart and purchase SKU',
           };
-        const s = yield n.json();
-        console.log('responseJson', s);
-        const i = yield this.renderIframe(s.consentUrl);
+        const n = yield s.json();
+        console.log('responseJson', n);
+        const i = yield this.renderIframe(n.consentUrl);
         return i.success
           ? {
               success: !0,
               data: {
                 skuId: e.skuId,
                 quantity: e.quantity || 1,
-                transactionId: s.id,
+                transactionId: n.id,
               },
             }
           : {
@@ -192,73 +194,119 @@
     }
     renderIframe(e) {
       return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((o, n) =>
+        return new Promise((o, s) =>
           __awaiter(this, void 0, void 0, function* () {
-            const n = document.createElement('div');
-            (n.style.position = 'fixed'),
-              (n.style.top = '0'),
-              (n.style.left = '0'),
-              (n.style.width = '100%'),
-              (n.style.height = '100%'),
-              (n.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'),
-              (n.style.zIndex = '9998'),
-              document.body.appendChild(n);
-            const s = this.createModal(),
-              i = this.createIframe(e),
-              r = this.createCloseButton(s, o);
-            s.appendChild(i),
-              s.appendChild(r),
-              document.body.appendChild(s),
-              (function (e, t, o) {
-                requestAnimationFrame(() => {
-                  (e.style.backgroundColor = 'rgba(0,0,0,0.5)'),
-                    (e.style.opacity = '1'),
-                    (t.style.width = '80%'),
-                    (t.style.height = '80%'),
-                    o &&
-                      ((o.style.opacity = '1'),
-                      (o.style.transform = 'scale(1)'));
+            if (this.config.popup) {
+              const s = 500,
+                n = 700,
+                i = (window.innerWidth - s) / 2,
+                r = (window.innerHeight - n) / 2;
+              window.opener = window;
+              const a = window.open(
+                e,
+                'GameShift Checkout',
+                `width=${s},height=${n},left=${i},top=${r}`,
+              );
+              if (!a)
+                return void o({
+                  success: !1,
+                  error: 'Popup was blocked by browser',
                 });
-              })(s, i, r);
-            const messageHandler = (e) => {
-              var a;
-              if (e.origin === `${getUrls(t).frontend}`)
+              const messageHandler = (e) => {
+                var s;
+                if (e.origin === `${getUrls(t).frontend}`)
+                  try {
+                    const t =
+                      'string' == typeof e.data ? JSON.parse(e.data) : e.data;
+                    ('PaymentComplete' === t.type ||
+                      ('iframe-result' === t.type &&
+                        'completed' ===
+                          (null === (s = t.result) || void 0 === s
+                            ? void 0
+                            : s.status))) &&
+                      (window.removeEventListener('message', messageHandler),
+                      a.close(),
+                      o({
+                        success: !0,
+                        status: 'completed',
+                        data: 'PaymentComplete' === t.type ? t : t.result,
+                      }));
+                  } catch (e) {
+                    console.error('Error processing message:', e);
+                  }
+              };
+              window.addEventListener('message', messageHandler);
+              const l = setInterval(() => {
+                a.closed &&
+                  (clearInterval(l),
+                  window.removeEventListener('message', messageHandler),
+                  o({
+                    success: !1,
+                    error: 'User closed the purchase window before completion',
+                  }));
+              }, 500);
+            } else {
+              const t = document.createElement('div');
+              (t.style.position = 'fixed'),
+                (t.style.top = '0'),
+                (t.style.left = '0'),
+                (t.style.width = '100%'),
+                (t.style.height = '100%'),
+                (t.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'),
+                (t.style.zIndex = '9998'),
+                document.body.appendChild(t);
+              const s = this.createModal(),
+                n = this.createIframe(e),
+                i = this.createCloseButton(s, o);
+              s.appendChild(n),
+                s.appendChild(i),
+                document.body.appendChild(s),
+                (function (e, t, o) {
+                  requestAnimationFrame(() => {
+                    (e.style.backgroundColor = 'rgba(0,0,0,0.5)'),
+                      (e.style.opacity = '1'),
+                      (t.style.width = '80%'),
+                      (t.style.height = '80%'),
+                      o &&
+                        ((o.style.opacity = '1'),
+                        (o.style.transform = 'scale(1)'));
+                  });
+                })(s, n, i);
+              const messageHandler = (e) => {
+                var r;
+                console.log('Received message:', e);
                 try {
-                  const t =
+                  const a =
                     'string' == typeof e.data ? JSON.parse(e.data) : e.data;
-                  'PaymentComplete' === t.type ||
-                  ('iframe-result' === t.type &&
+                  'PaymentComplete' === a.type ||
+                  ('iframe-result' === a.type &&
                     'completed' ===
-                      (null === (a = t.result) || void 0 === a
+                      (null === (r = a.result) || void 0 === r
                         ? void 0
-                        : a.status))
-                    ? (animateModalOut(s, i, r),
+                        : r.status))
+                    ? (window.removeEventListener('message', messageHandler),
+                      animateModalOut(s, n, i),
                       setTimeout(() => {
                         document.body.removeChild(s),
-                          document.body.removeChild(n),
+                          document.body.removeChild(t),
                           console.log('Resolving promise with success result'),
-                          window.removeEventListener('message', messageHandler),
                           o({
                             success: !0,
                             status: 'completed',
-                            data: 'PaymentComplete' === t.type ? t : t.result,
+                            data: 'PaymentComplete' === a.type ? a : a.result,
                           });
                       }, 300))
                     : console.log(
                         'Message did not match auto-close criteria:',
-                        t,
+                        a,
                       );
                 } catch (t) {
                   console.error('Error processing message:', t),
                     console.log('Raw message data:', e.data);
                 }
-              else
-                console.log(
-                  'Ignoring message from unexpected origin:',
-                  e.origin,
-                );
-            };
-            window.addEventListener('message', messageHandler);
+              };
+              window.addEventListener('message', messageHandler);
+            }
           }),
         );
       });
@@ -375,7 +423,7 @@
         (o.style.zIndex = '9999'),
         (o.style.pointerEvents = 'all'),
         e.appendChild(o);
-      const n = document.createElement('div');
+      const s = document.createElement('div');
       !(function (e) {
         (e.style.position = 'fixed'),
           (e.style.top = '50%'),
@@ -395,9 +443,9 @@
           (e.style.fontFamily = 'Inter, sans-serif'),
           (e.style.border = '1px solid rgba(255,255,255,0.1)'),
           (e.style.backdropFilter = 'blur(10px)');
-      })(n),
-        (n.style.zIndex = '10000');
-      const s = document.createElement('p');
+      })(s),
+        (s.style.zIndex = '10000');
+      const n = document.createElement('p');
       !(function (e) {
         (e.textContent =
           'Are you sure you want to close this window? Your progress will be lost.'),
@@ -407,7 +455,7 @@
           (e.style.color = '#ffffff'),
           (e.style.fontFamily = 'Inter, sans-serif'),
           (e.style.fontWeight = '400');
-      })(s);
+      })(n);
       const i = document.createElement('div');
       !(function (e) {
         (e.style.display = 'flex'),
@@ -417,10 +465,10 @@
           (e.style.fontFamily = 'Inter, sans-serif');
       })(i);
       const r = this.createConfirmationButton(!0, () => {
-          (n.style.opacity = '0'),
-            (n.style.transform = 'translate(-50%, -50%) scale(0.9)'),
+          (s.style.opacity = '0'),
+            (s.style.transform = 'translate(-50%, -50%) scale(0.9)'),
             setTimeout(() => {
-              document.body.removeChild(n),
+              document.body.removeChild(s),
                 e.removeChild(o),
                 (this.isConfirmationDialogOpen = !1),
                 (this.skipCloseConfirmation = !0),
@@ -428,22 +476,22 @@
             }, 200);
         }),
         a = this.createConfirmationButton(!1, () => {
-          (n.style.opacity = '0'),
-            (n.style.transform = 'translate(-50%, -50%) scale(0.9)'),
+          (s.style.opacity = '0'),
+            (s.style.transform = 'translate(-50%, -50%) scale(0.9)'),
             setTimeout(() => {
-              document.body.removeChild(n),
+              document.body.removeChild(s),
                 e.removeChild(o),
                 (this.isConfirmationDialogOpen = !1);
             }, 200);
         });
       i.appendChild(a),
         i.appendChild(r),
-        n.appendChild(s),
-        n.appendChild(i),
-        document.body.appendChild(n),
+        s.appendChild(n),
+        s.appendChild(i),
+        document.body.appendChild(s),
         requestAnimationFrame(() => {
-          (n.style.opacity = '1'),
-            (n.style.transform = 'translate(-50%, -50%) scale(1)');
+          (s.style.opacity = '1'),
+            (s.style.transform = 'translate(-50%, -50%) scale(1)');
         });
     }
     createConfirmationButton(e, t) {
